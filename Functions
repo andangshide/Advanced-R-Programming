@@ -1,0 +1,89 @@
+Function Interface
+
+RStudio from their mirror of the Comprehensive R Archive Network (CRAN). 
+This code counts the number of times the filehash package was downloaded on July 20, 2016.
+library(readr)
+library(dplyr)
+
+## Download data from RStudio (if we haven't already)
+if(!file.exists("data/2016-07-20.csv.gz")) {
+        download.file("http://cran-logs.rstudio.com/2016/2016-07-20.csv.gz", 
+                      "data/2016-07-20.csv.gz")
+}
+cran <- read_csv("data/2016-07-20.csv.gz", col_types = "ccicccccci")
+cran %>% filter(package == "filehash") %>% nrow
+[1] 179
+
+What if we want to know more about? For example, Date? other Packages?
+library(dplyr)
+library(readr)
+
+## pkgname: package name (character)
+## date: YYYY-MM-DD format (character)
+num_download <- function(pkgname, date) {
+        ## Construct web URL
+        year <- substr(date, 1, 4)
+        src <- sprintf("http://cran-logs.rstudio.com/%s/%s.csv.gz",
+                       year, date)
+
+        ## Construct path for storing local file
+        dest <- file.path("data", basename(src))
+
+        ## Don't download if the file is already there!
+        if(!file.exists(dest))
+                download.file(src, dest, quiet = TRUE)
+
+        cran <- read_csv(dest, col_types = "ccicccccci", progress = FALSE)
+        cran %>% filter(package == pkgname) %>% nrow
+Download自己想要的数据
+num_download("Rcpp", "2016-07-19")
+[1] 13572
+
+现在Download必须输入PACKAGE和DATE两个指令，如果想要设置Default Date?
+num_download <- function(pkgname, date = "2016-07-20") {
+        year <- substr(date, 1, 4)
+        src <- sprintf("http://cran-logs.rstudio.com/%s/%s.csv.gz",
+                       year, date)
+                    后面步骤和上方一模一样
+num_download("Rcpp")
+[1] 14761                    
+    
+Re-factoring Code
+ 
+check_for_logfile <- function(date) {
+        year <- substr(date, 1, 4)
+        src <- sprintf("http://cran-logs.rstudio.com/%s/%s.csv.gz",
+                       year, date)
+        dest <- file.path("data", basename(src))                           保存到本地的路径
+        if(!file.exists(dest)) {                                           如果本地文档不在
+                val <- download.file(src, dest, quiet = TRUE)              赋值val为download指令
+                if(!val)                                                   如果没有download
+                        stop("unable to download file ", src)              停止指令并显示："unable to dowload file"
+        }
+        dest
+}
+ 省略完毕。好处：不用在意网址了……而且看上去更加清晰明了
+num_download <- function(pkgname, date = "2016-07-20") {
+        dest <- check_for_logfile(date)
+        cran <- read_csv(dest, col_types = "ccicccccci", progress = FALSE)
+        cran %>% filter(package == pkgname) %>% nrow
+}  
+ 
+ Dependency Checking
+ 上方functions基于readr和dplyr packages，运行前检查这个两个package是否安装
+ check_pkg_deps <- function() {
+        if(!require(readr)) {                                             require()像library()：library()显示error,require()可具体显示
+                message("installing the 'readr' package")                 是哪个package没有装
+                install.packages("readr")
+        }
+        if(!require(dplyr))
+                stop("the 'dplyr' package needs to be installed first")
+}
+ Final Code
+num_download <- function(pkgname, date = "2016-07-20") {
+        check_pkg_deps()
+        dest <- check_for_logfile(date)
+        cran <- read_csv(dest, col_types = "ccicccccci", progress = FALSE)
+        cran %>% filter(package == pkgname) %>% nrow
+}
+
