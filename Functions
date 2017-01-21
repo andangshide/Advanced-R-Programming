@@ -87,3 +87,52 @@ num_download <- function(pkgname, date = "2016-07-20") {
         cran %>% filter(package == pkgname) %>% nrow
 }
 
+ Vectorization
+  把只能查一个package改成查多个
+ ## 'pkgname' can now be a character vector of names
+num_download <- function(pkgname, date = "2016-07-20") {
+        check_pkg_deps()
+        dest <- check_for_logfile(date)
+        cran <- read_csv(dest, col_types = "ccicccccci", progress = FALSE)
+        cran %>% filter(package %in% pkgname) %>%                          filter命令
+                group_by(package) %>%
+                summarize(n = n())
+}  
+ Example:
+num_download(c("filehash", "weathermetrics"))
+# A tibble: 2 × 2
+         package     n
+           <chr> <int>
+1       filehash   179
+2 weathermetrics     7
+
+Argument checking
+
+num_download <- function(pkgname, date = "2016-07-20") {
+        check_pkg_deps()
+
+        ## Check arguments
+        if(!is.character(pkgname))
+                stop("'pkgname' should be character")
+        if(!is.character(date))
+                stop("'date' should be character")
+        if(length(date) != 1)
+                stop("'date' should be length 1")
+
+        dest <- check_for_logfile(date)
+        cran <- read_csv(dest, col_types = "ccicccccci", 
+                         progress = FALSE)
+        cran %>% filter(package %in% pkgname) %>% 
+                group_by(package) %>%
+                summarize(n = n())
+ Example               
+  num_download("filehash", c("2016-07-20", "2016-0-21"))
+Error in num_download("filehash", c("2016-07-20", "2016-0-21")): 'date' should be length 1        
+
+Developing functions is a key aspect of programming in R and typically involves a bottom-up process.
+
+Code is written to accomplish a specific task or a specific instance of a task.
+The code is examined to identify key aspects that may be modified by other users; these aspects are abstracted out of the code and made arguments of a function.
+Functions are written to accomplish more general versions of a task; specific instances of the task are indicated by setting values of function arguments.
+Function code can be re-factored to provide better modularity and to divide functions into specific sub-tasks.
+Functions can be assembled and organized into R packages.
