@@ -1,0 +1,154 @@
+Expressions
+expressions allows you manipulate code with code!
+
+quote()
+two_plus_two <- quote(2 + 2)
+two_plus_two
+2 + 2
+
+eval():execute
+eval(two_plus_two)
+[1] 4
+
+parse():transform a string into an expression                  deparse():reverse
+tpt_string <- "2 + 2"                                          deparse(two_plus_two)
+                                                               [1] "2 + 2"
+tpt_expression <- parse(text = tpt_string)
+
+eval(tpt_expression)
+[1] 4
+
+  ##expression命令的内容可以跟list()似的进行更改
+sum_expr <- quote(sum(1, 5))
+eval(sum_expr)
+[1] 6
+sum_expr[[1]]
+sum
+sum_expr[[2]]
+[1] 1
+sum_expr[[3]]
+[1] 5
+sum_expr[[1]] <- quote(paste0)
+sum_expr[[2]] <- quote(4)
+sum_expr[[3]] <- quote(6)
+eval(sum_expr)
+[1] "46"
+
+call(name of the function,arg1,....): compose the expression
+
+sum_40_50_expr <- call("sum", 40, 50)
+sum_40_50_expr
+sum(40, 50)
+eval(sum_40_50_expr)
+[1] 90
+
+ match.call()： 检查argument是否格式正确
+ first_arg <- function(...){
+  expr <- match.call()
+  first_arg_expr <- expr[[2]]
+  first_arg <- eval(first_arg_expr)
+  if(is.numeric(first_arg)){
+    paste("The first argument is", first_arg)
+  } else {
+    "The first argument is not numeric."
+  }
+}
+ ##example:
+first_arg(2, 4, "seven", FALSE)
+[1] "The first argument is 2"
+
+first_arg("two", 4, "seven", FALSE)
+[1] "The first argument is not numeric."
+
+Environment
+new.env(): create a new environment
+assign(): 赋值  get():显示
+ 
+ #Example
+my_new_env <- new.env()
+my_new_env$x <- 4
+my_new_env$x
+[1] 4
+
+assign("y", 9, envir = my_new_env)
+get("y", envir = my_new_env)
+[1] 9
+my_new_env$y
+
+ls(): get all variables in the environment
+rm(): remove the variables
+exist(): check the variable
+ 
+ #Example
+ls(my_new_env)
+[1] "x" "y"
+rm(y, envir = my_new_env)
+exists("y", envir = my_new_env)
+[1] TRUE
+exists("x", envir = my_new_env)
+[1] TRUE
+my_new_env$x
+[1] 4
+my_new_env$y
+NULL
+[1] 9
+
+search(): packages的上下级关系
+  
+  ##package:magrittr is the parent of .GlobalEnv, and package:tidyr is parent of package:magrittr, 
+search()
+ [1] ".GlobalEnv"             "package:magrittr"      
+ [3] "package:tidyr"          "package:microbenchmark"
+ [5] "package:purrr"          "package:dplyr" 
+   ##所有download下来的packages，都是“GlabalEnv"的parent packages
+ 
+ Execution Environments
+
+##Example 1                    
+x <- 10
+
+my_func <- function(){
+  x <- 5
+  return(x)
+}
+
+my_func()                       When my_func() is executed, a new environment is created             
+[1] 5                           called the execution environment which only exists while my_func() is running           
+                                When return() is executed it looks first in the execution environment for a value that is assigned to x.
+  ##Example 2                         即：Global Environment→ execution function Environment
+x <- 10
+
+another_func <- function(){
+  return(x)
+}
+
+another_func()
+[1] 10
+
+  ##Example 3
+x <- 10
+x
+[1] 10
+
+assign1 <- function(){
+  x <<- "Wow!"                             "<<-"跳级赋值→ 直接操纵Environment 
+}
+
+>assign1()    运行environment               如果是 assign1<-function(){    则：>x        >assign1       >assign1()
+>x            运行envi中的x                        x<-"Wow!"              [1] 10        function(){    Error in assign1() : object 'wow' not found
+[1] "Wow!"                                                                              x<-wow
+                                                                                        }
+a_variable_name
+Error in eval(expr, envir, enclos): object 'a_variable_name' not found
+exists("a_variable_name")
+[1] FALSE
+
+assign2 <- function(){
+  a_variable_name <<- "Magic!"
+}
+
+assign2()
+exists("a_variable_name")
+[1] TRUE
+a_variable_name
+[1] "Magic!"
