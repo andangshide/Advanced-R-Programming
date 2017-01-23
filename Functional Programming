@@ -7,7 +7,7 @@ Functional programming concentrates on four constructs:
 3.Functions
 4.Function Applications (evaluating functions given arguments and/or data)
 
-library(purr):  groups of functions that are essential for functional programming,mostly data structure and functions
+library(purrr):  groups of functions that are essential for functional programming,mostly data structure and functions
 
 Map
 Functions applied to data structure← list/vector
@@ -130,4 +130,77 @@ rep(1:5, 1:5)
 [1] 1 2 2 3 3 3 4 4 4 4 5 5 5 5 5
 
 n_unique(rep(1:5, 1:5))
-[1]  5
+[1]  15                                                    ?
+
+Partial Application: 比定义的function少条件的application
+mult_three_n <- function(x, y, z){
+  x * y * z
+}
+
+mult_by_15 <- partial(mult_three_n, x = 3, y = 5)
+
+mult_by_15(z = 4)
+[1] 60
+
+Side Effect
+ ##If you want to evaluate a function across a data structure you should use the walk() function from purrr
+ 
+walk(c("Friends, Romans, countrymen,",
+       "lend me your ears;",
+       "I come to bury Caesar,", 
+       "not to praise him."), message)
+Friends, Romans, countrymen,
+lend me your ears;
+I come to bury Caesar,
+not to praise him.
+
+Recursion
+a few easy to solve problems called “base cases,” 
+and then a case for more complicated problems where the function is called inside of itself.
+simple part→ complex problem
+
+  ##add all factors in vector
+  method 1: loop
+vector_sum_loop <- function(v){
+  result <- 0
+  for(i in v){
+    result <- result + i
+  }
+  result
+}
+  
+  method 2：Recursion
+  vector_sum_rec <- function(v){
+  if(length(v) == 1){
+    v
+  } else {
+    v[1] + vector_sum_rec(v[-1])                        v[-1]means "not the number of index 1"
+  }
+}
+vector_sum_rec(c(5, 40, 91))
+[1] 136
+ 
+ ##Fibonacci sequence
+
+fib <- function(n){
+  stopifnot(n > 0)
+  if(n == 1){
+    0
+  } else if(n == 2){
+    1
+  } else {
+    fib(n - 1) + fib(n - 2)
+  }
+}
+
+map_dbl(1:12, fib)
+ [1]  0  1  1  2  3  5  8 13 21 34 55 89
+ 
+ Summary
+Functional programming is based on lambda calculus.
+This approach concentrates on data, variables, functions, and function applications.
+It’s possible for functions to be able to return other functions.
+The core functional programming concepts can be summarized in the following categories: map, reduce, search, filter, and compose.
+Partial application of functions allows functions to be used like data structures.
+Side effects are difficult to debug although they motivate a huge fraction of computer programming.
+The most important part of understanding recursion is understanding recursion.
