@@ -1,0 +1,97 @@
+Error();warning() generated in the function will include the name of the function it was generated in.
+
+name_of_function <- function(){
+  stop("Something bad happened.")
+}
+
+name_of_function()
+Error in name_of_function(): Something bad happened.
+
+error_if_n_is_greater_than_zero <- function(n){
+  stopifnot(n <= 0)
+  n
+}
+
+error_if_n_is_greater_than_zero(5)
+Error: n <= 0 is not TRUE
+
+make_NA <- function(x){
+  warning("Generating an NA.")
+  NA
+}
+
+make_NA("Sodium")
+Warning in make_NA("Sodium"): Generating an NA.
+[1] NA
+
+  ##how to handle errors?
+beera <- function(expr){
+  tryCatch(expr,
+         error = function(e){
+           message("An error occurred:\n", e)
+         },
+         warning = function(w){
+           message("A warning occured:\n", w)
+         },
+         finally = {
+           message("Finally done!")
+         })  
+         
+beera({
+  2 + 2
+})
+Finally done!
+[1] 4
+
+beera({
+  "two" + 2
+})
+An error occurred:
+Error in "two" + 2: non-numeric argument to binary operator
+
+Finally done!
+
+beera({
+  as.numeric(c(1, "two", 3))
+})
+A warning occured:
+simpleWarning in doTryCatch(return(expr), name, parentenv, handler): NAs introduced by coercion
+
+Finally done!         
+
+  ##to limit the number of errors your program generates as much as possible. 
+ Method #1 : 无法辨认字母
+ is_even <- function(n){
+ n %% 2 == 0
+}
+
+is_even(768)
+[1] TRUE
+
+is_even("two")
+Error in n%%2: non-numeric argument to binary operator 
+
+Method #2 ：
+is_even_error <- function(n){
+  tryCatch(n %% 2 == 0,
+           error = function(e){
+             FALSE
+           })
+}
+
+is_even_error(714)
+[1] TRUE
+
+is_even_error("eight")
+[1] FALSE
+
+ #Method 3:Quick
+ is_even_check <- function(n){
+  is.numeric(n) && n %% 2 == 0
+}
+
+is_even_check(1876)
+[1] TRUE
+
+is_even_check("twelve")
+[1] FALSE
