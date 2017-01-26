@@ -1,0 +1,136 @@
+1.Our expectations were incorrect, based on the documented behavior of the software; or
+2.There is a problem with the code, such that the programming is not done in a way that will match expectations.
+
+browser(): an interactive debugging environment that allows you to step through code one expression at a time
+debug() / debugonce(): a function that initiates the browser within a function
+trace(): this function allows you to temporarily insert pieces of code into other functions to modify their behavior
+recover(): a function for navigating the function call stack after a function has thrown an error
+traceback(): prints out the function call stack after an error occurs; does nothing if there’s no error
+
+traceback():有error即刻反馈
+  ##Example:
+check_n_value <- function(n) {
+        if(n > 0) {
+                stop("n should be <= 0")
+        }
+}
+error_if_n_is_greater_than_zero <- function(n){
+        check_n_value(n)
+        n
+}
+error_if_n_is_greater_than_zero(5)
+Error in check_n_value(n): n should be <= 0
+
+traceback()
+3: stop("n should be <= 0") at #2
+2: check_n_value(n) at #2
+1: error_if_n_is_greater_than_zero(5)
+
+browser():if you are the code producer
+  ##Example
+check_n_value <- function(n) {
+        if(n > 0) {
+                browser()  ## Error occurs around here
+                stop("n should be <= 0")
+        }
+}
+
+error_if_n_is_greater_than_zero(5)
+Called from: check_n_value(n)
+Browse[1]> 
+
+trace(): if you cannot get access to the function code
+trace("check_n_value")
+
+error_if_n_is_greater_than_zero(5)
+trace: check_n_value(n)
+Error in check_n_value(n): n should be <= 0
+
+as.list()/body():拆分code结构
+  ##Example
+ 第一拆
+as.list(body(check_n_value))
+[[1]]
+`{`
+
+[[2]]
+if (n > 0) {
+    stop("n should be <= 0")
+}
+
+ 第二拆
+as.list(body(check_n_value)[[2]])
+[[1]]
+`if`
+
+[[2]]
+n > 0
+
+[[3]]
+{
+    stop("n should be <= 0")
+}
+
+trace("check_n_value", browser, at = list(c(2, 3)))
+[1] "check_n_value"
+
+The trace() function has a side effect of modifying the function and converting into a new object of class “functionWithTrace”.
+body(check_n_value)
+{
+    if (n > 0) {
+        .doTrace(browser(), "step 2,3")
+        {
+            stop("n should be <= 0")
+        }
+    }
+}
+
+quote():add more complex expressions to a function 
+  ##Example
+trace("check_n_value", quote({
+        if(n == 5) {
+                message("invoking the browser")
+                browser()
+        }
+}), at = 2)
+[1] "check_n_value"
+
+body(check_n_value)
+{
+    {
+        .doTrace({
+            if (n == 5) {
+                message("invoking the browser")
+                browser()
+            }
+        }, "step 2")
+        if (n > 0) {
+            stop("n should be <= 0")
+        }
+    }
+}
+
+trace():Debugging functions within a package
+  ##Example:insert tracing code into the glm() function within the stats package
+trace("glm", browser, at = 4, where = asNamespace("stats"))
+Tracing function "glm" in package "namespace:stats"
+[1] "glm"
+
+debug()/debugonce():“debugging state” of a function            debug():forever flagged/ debugonce():turn off when browser exits
+
+## Turn on debugging state for 'lm' function
+debug(lm)                                                  ==trace(f, browser) into browser state
+
+recover():一般和option()连用
+ ##Example
+options(error = recover)
+
+error_if_n_is_greater_than_zero(5)
+Error in check_n_value(n) : n should be <= 0
+
+Enter a frame number, or 0 to exit   
+
+1: error_if_n_is_greater_than_zero(5)
+2: #2: check_n_value(n)
+
+Selection:
