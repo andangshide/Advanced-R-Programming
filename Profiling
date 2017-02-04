@@ -1,0 +1,132 @@
+Profiling: improve the slow section of the code
+packages: microbenchmark and profvis
+
+microbenchmark
+
+want the outlook to be
+date          temp    record_temp
+2015-07-01    26.5    FALSE   
+2015-07-02    27.2    TRUE    
+2015-07-03    28.0    TRUE    
+2015-07-04    26.9    FALSE   
+2015-07-05    27.5    FALSE   
+2015-07-06    25.9    FALSE   
+2015-07-07    28.0    TRUE    
+2015-07-08    28.2    TRUE 
+
+Option 1
+# Function that uses a loop 
+find_records_1 <- function(datafr, threshold){
+  highest_temp <- c()
+  record_temp <- c()
+  for(i in 1:nrow(datafr)){
+    highest_temp <- max(highest_temp, datafr$temp[i])
+    record_temp[i] <- datafr$temp[i] >= threshold & 
+      datafr$temp[i] >= highest_temp
+  }
+  datafr <- cbind(datafr, record_temp)
+  return(datafr)
+}
+
+Option 2
+# Function that uses tidyverse functions
+find_records_2 <- function(datafr, threshold){
+  datafr <- datafr %>%
+    mutate_(over_threshold = ~ temp >= threshold,
+            cummax_temp = ~ temp == cummax(temp),
+            record_temp = ~ over_threshold & cummax_temp) %>%
+    select_(.dots = c("-over_threshold", "-cummax_temp"))
+  return(as.data.frame(datafr))
+}
+
+apply:
+example_data <- data_frame(date = c("2015-07-01", "2015-07-02",
+                                    "2015-07-03", "2015-07-04",
+                                    "2015-07-05", "2015-07-06",
+                                    "2015-07-07", "2015-07-08"),
+                           temp = c(26.5, 27.2, 28.0, 26.9, 
+                                    27.5, 25.9, 28.0, 28.2))
+
+(test_1 <- find_records_1(example_data, 27))
+        date temp record_temp
+1 2015-07-01 26.5       FALSE
+2 2015-07-02 27.2        TRUE
+3 2015-07-03 28.0        TRUE
+4 2015-07-04 26.9       FALSE
+5 2015-07-05 27.5       FALSE
+6 2015-07-06 25.9       FALSE
+7 2015-07-07 28.0        TRUE
+8 2015-07-08 28.2        TRUE
+
+(test_2 <- find_records_2(example_data, 27))
+        date temp record_temp
+1 2015-07-01 26.5       FALSE
+2 2015-07-02 27.2        TRUE
+3 2015-07-03 28.0        TRUE
+4 2015-07-04 26.9       FALSE
+5 2015-07-05 27.5       FALSE
+6 2015-07-06 25.9       FALSE
+7 2015-07-07 28.0        TRUE
+8 2015-07-08 28.2        TRUE
+
+all.equal(test_1, test_2)
+[1] TRUE
+
+test the performance
+record_temp_perf <- microbenchmark(find_records_1(example_data, 27), 
+                                   find_records_2(example_data, 27))
+record_temp_perf
+Unit: microseconds
+                             expr      min        lq     mean   median
+ find_records_1(example_data, 27)  674.628  704.5445  770.646  719.366
+ find_records_2(example_data, 27) 1064.935 1095.5015 1183.014 1131.834
+       uq      max neval
+  753.949 4016.827   100
+ 1190.596 4249.408   100
+ 
+ test the performance for large dataset
+ library(dlnm)
+data("chicagoNMMAPS")
+
+record_temp_perf_2 <- microbenchmark(find_records_1(chicagoNMMAPS, 27), 
+                                     find_records_2(chicagoNMMAPS, 27))
+record_temp_perf_2
+Unit: milliseconds
+                              expr        min         lq       mean
+ find_records_1(chicagoNMMAPS, 27) 182.226569 197.540354 203.531151
+ find_records_2(chicagoNMMAPS, 27)   1.974453   2.197642   2.884933
+     median         uq       max neval
+ 200.767944 205.575326 321.96972   100
+   2.343669   2.477938  14.34087   100
+   
+Profvis: 找出拉慢速度的step并且visualize it
+library(profvis)
+datafr <- chicagoNMMAPS
+threshold <- 27
+
+profvis({
+  highest_temp <- c()
+  record_temp <- c()
+  for(i in 1:nrow(datafr)){
+    highest_temp <- max(highest_temp, datafr$temp[i])
+    record_temp[i] <- datafr$temp[i] >= threshold &              spent most of the time
+      datafr$temp[i] >= highest_temp
+  }
+  datafr <- cbind(datafr, record_temp)
+})
+
+Non-standard Evaluation
+Non-standard evaluation version　　　	Standard evaluation version
+filter(fips %in% counties)　　　　　　　filter_(~ fips %in% counties)
+mutate(max_rain = max(tot_precip)　　　mutate_(max_rain = ~ max(tot_precip)
+summarize(tot_precip = sum(precip))　　summarize_(tot_precip = ~ sum(precip))
+group_by(storm_id, fips)　　　　　　　　group_by_(~ storm_id, ~ fips)
+aes(x = long, y = lat)　　　　　　　　　aes_(x = ~ long, y = ~ lat)
+select(-start_date, -end_date　　　　　select_(.dots = c('start_date', 'end_date'))
+select(-start_date, -end_date)　　　　　select_(.dots = c('-start_date', '-end_date'))
+spread(key, mean)　　　　　　　　　　　	spread_(key_col = 'key', value_col = 'mean')
+gather(key, mean)　　　　　　　　　　　	gather_(key_col = 'key', value_col = 'mean')
+
+Functions that use non-standard evaluation can cause problems within functions written for a package.
+The NSE functions in tidyverse packages all have standard evaluation analogues that should be used when 
+writing functions that will be used by others.
