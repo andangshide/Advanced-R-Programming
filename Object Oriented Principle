@@ -1,3 +1,4 @@
+S3 SYSTEM
 class():class of an object
 
 class(2)
@@ -106,3 +107,167 @@ class(square_4)
 inherits():check if an object is a sub-class of a specified class
 inherits(square_4, "square")
 [1] TRUE
+
+S4 SYSTEM
+setclass():to set a class in S4 system
+
+setClass("bus_S4",
+         slots = list(n_seats = "numeric", 
+                      top_speed = "numeric",
+                      current_speed = "numeric",
+                      brand = "character"))
+setClass("party_bus_S4",
+         slots = list(n_subwoofers = "numeric",
+                      smoke_machine_on = "logical"),
+         contains = "bus_S4")                               party_bus_S4是bus_S4的子集
+       
+new():往集合里面加入object
+my_bus <- new("bus_S4", n_seats = 20, top_speed = 80, 
+              current_speed = 0, brand = "Volvo")
+my_bus
+An object of class "bus_S4"
+Slot "n_seats":
+[1] 20
+
+Slot "top_speed":
+[1] 80
+
+Slot "current_speed":
+[1] 0
+
+Slot "brand":
+[1] "Volvo"
+
+my_party_bus <- new("party_bus_S4", n_seats = 10, top_speed = 100,
+                    current_speed = 0, brand = "Mercedes-Benz", 
+                    n_subwoofers = 2, smoke_machine_on = FALSE)
+my_party_bus
+An object of class "party_bus_S4"
+Slot "n_subwoofers":
+[1] 2
+
+Slot "smoke_machine_on":
+[1] FALSE
+
+Slot "n_seats":
+[1] 10
+
+Slot "top_speed":
+[1] 100
+
+Slot "current_speed":
+[1] 0
+
+Slot "brand":
+[1] "Mercedes-Benz"
+
+@:和$作用相似
+my_bus@n_seats
+[1] 20
+my_party_bus@top_speed
+[1] 100
+
+set 分类
+
+ ##Example:see if a bus_S4 object is in motion
+setGeneric("is_bus_moving", function(x){
+  standardGeneric("is_bus_moving")
+})
+[1] "is_bus_moving"
+
+set method
+
+setMethod("is_bus_moving",
+          c(x = "bus_S4"),
+          function(x){
+            x@current_speed > 0
+          })
+[1] "is_bus_moving"
+ 运行
+is_bus_moving(my_bus)
+[1] FALSE
+my_bus@current_speed <- 1
+is_bus_moving(my_bus)
+[1] TRUE
+
+Reference Class
+setRefClass(): to define a class’ fields
+
+  ##Example
+Student <- setRefClass("Student",
+                      fields = list(name = "character",
+                                    grad_year = "numeric",
+                                    credits = "numeric",
+                                    id = "character",
+                                    courses = "list"),
+                      methods = list(
+                        hello = function(){
+                          paste("Hi! My name is", name)
+                        },
+                        add_credits = function(n){
+                          credits <<- credits + n                       "<<-"给高级赋值，例：method/fields
+                        }, 
+                        get_email = function(){
+                          paste0(id, "@jhu.edu")
+                        }
+                      ))
+                      
+new(): create object
+brooke <- Student$new(name = "Brooke", grad_year = 2019, credits = 40,
+                    id = "ba123", courses = list("Ecology", "Calculus III"))
+roger <- Student$new(name = "Roger", grad_year = 2020, credits = 10,
+                    id = "rp456", courses = list("Puppetry", "Elementary Algebra"))
+                    
+$: access the field and method
+brooke$credits
+[1] 40
+roger$hello()
+[1] "Hi! My name is Roger"
+roger$get_email()
+[1] "rp456@jhu.edu"
+
+Methods can change the state of an object
+  ##Example
+brooke$credits
+[1] 40
+brooke$add_credits(4)
+brooke$credits
+[1] 44
+
+Reference classes can inherit from other classes by specifying the contains argument when they’re defined. 
+  ##Example
+Grad_Student <- setRefClass("Grad_Student",
+                            contains = "Student",
+                            fields = list(thesis_topic = "character"),
+                            methods = list(
+                              defend = function(){
+                                paste0(thesis_topic, ". QED.")
+                              }
+                            ))
+
+jeff <- Grad_Student$new(name = "Jeff", grad_year = 2021, credits = 8,              定义为“Grad_Student”默认inherit了此class的项目
+                    id = "jl55", courses = list("Fitbit Repair", 
+                                                "Advanced Base Graphics"),
+                    thesis_topic = "Batch Effects")
+
+jeff$defend()
+[1] "Batch Effects. QED."
+
+Summary
+R has three object oriented systems: S3, S4, and Reference Classes.
+
+Reference Classes are the most similar to classes and objects in other programming languages.
+
+Classes are blueprints for an object.
+
+Objects are individual instances of a class.
+
+Methods are functions that are associated with a particular class.
+
+Constructors are methods that create objects.
+
+Everything in R is an object.
+
+S3 is a liberal object oriented system that allows you to assign a class to any object.
+
+S4 is a more strict object oriented system that build upon ideas in S3.
