@@ -39,8 +39,9 @@ error_if_n_is_greater_than_zero(5)
 Called from: check_n_value(n)
 Browse[1]> 
 
-trace(): if you cannot get access to the function code
-trace("check_n_value")
+trace(): if you cannot get access to the function code          trace("f")            
+trace("check_n_value")                                          Whenever f() is called, a message is printed 
+                                                                to the console indicating that the function was called.
 
 error_if_n_is_greater_than_zero(5)
 trace: check_n_value(n)
@@ -117,7 +118,6 @@ Tracing function "glm" in package "namespace:stats"
 [1] "glm"
 
 debug()/debugonce():“debugging state” of a function            debug():forever flagged/ debugonce():turn off when browser exits
-temporarily insert pieces of code into other functions to modify their behavior
 
 ## Turn on debugging state for 'lm' function
 debug(lm)                                                  ==trace(f, browser) into browser state
