@@ -26,9 +26,9 @@ traceback()
 2: check_n_value(n) at #2
 1: error_if_n_is_greater_than_zero(5)
 
-browser():if you are the code producer
-  ##Example
-check_n_value <- function(n) {
+browser():if you are the code producer                            interactive debugging environment that allows you to 
+  ##Example                                                       step through code one expression at a time
+check_n_value <- function(n) {                       
         if(n > 0) {
                 browser()  ## Error occurs around here
                 stop("n should be <= 0")
