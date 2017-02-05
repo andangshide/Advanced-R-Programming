@@ -117,6 +117,7 @@ Tracing function "glm" in package "namespace:stats"
 [1] "glm"
 
 debug()/debugonce():“debugging state” of a function            debug():forever flagged/ debugonce():turn off when browser exits
+temporarily insert pieces of code into other functions to modify their behavior
 
 ## Turn on debugging state for 'lm' function
 debug(lm)                                                  ==trace(f, browser) into browser state
